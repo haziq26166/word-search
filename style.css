@@ -1,0 +1,735 @@
+@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@500;600;700;800&display=swap');
+
+/* =========================================
+   Tokens
+   ========================================= */
+:root {
+    --ink: #2b2358;
+    --ink-soft: #6a6694;
+    --sky: #cfe8ff;
+    --paper: #ffffff;
+    --board: #ece6ff;
+
+    --violet: #7a5cff;
+    --violet-dark: #5638d6;
+    --pink: #ff5fa2;
+    --sun: #ffd23f;
+    --sun-dark: #e0a800;
+    --mint: #34d6a5;
+    --mint-soft: #d9faee;
+
+    --outline: 3px solid var(--ink);
+    --radius-lg: 28px;
+    --radius-md: 18px;
+    --radius-sm: 12px;
+
+    --grid-gap: 5px;
+    --grid-pad: 12px;
+    --board-size: calc(100dvh - 250px);
+
+    --font-display: 'Fredoka', 'Trebuchet MS', sans-serif;
+    --font-body: 'Nunito', 'Segoe UI', Roboto, sans-serif;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: var(--font-body);
+    color: var(--ink);
+    background-color: var(--sky);
+    /* flat polka-dot wallpaper */
+    background-image: radial-gradient(rgba(255, 255, 255, 0.75) 3px, transparent 3.5px);
+    background-size: 28px 28px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100dvh;
+    overflow: hidden;
+    padding: 20px;
+}
+
+button { font-family: inherit; }
+
+:focus-visible {
+    outline: 3px solid var(--pink);
+    outline-offset: 3px;
+}
+
+/* =========================================
+   Layout
+   ========================================= */
+.game-wrapper {
+    background: var(--paper);
+    border: var(--outline);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 8px 0 var(--ink);
+    padding: 24px 30px 28px;
+    max-width: 1040px;
+    width: 100%;
+    max-height: calc(100dvh - 48px);
+    display: flex;
+    flex-direction: column;
+}
+
+header {
+    text-align: center;
+    margin-bottom: 18px;
+    flex-shrink: 0;
+}
+
+header h1 {
+    font-family: var(--font-display);
+    font-size: 34px;
+    font-weight: 700;
+    line-height: 1.1;
+    color: var(--ink);
+    /* sticker-style offset shadow */
+    text-shadow: 3px 3px 0 var(--sun);
+    margin-bottom: 8px;
+}
+
+header p {
+    color: var(--ink-soft);
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.game-container {
+    display: flex;
+    gap: 28px;
+    width: 100%;
+    flex: 1;
+    min-height: 0;
+    align-items: center;
+    justify-content: center;
+}
+
+.grid-section {
+    flex: 1 1 56%;
+    min-width: 0;
+    display: flex;
+    justify-content: center;
+}
+
+.right-col {
+    flex: 1 1 44%;
+    min-width: 0;
+    max-height: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+/* =========================================
+   Board
+   ========================================= */
+.word-grid {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    grid-template-rows: repeat(12, 1fr);
+    gap: var(--grid-gap);
+    padding: var(--grid-pad);
+    width: min(100%, var(--board-size));
+    aspect-ratio: 1 / 1;
+    background: var(--board);
+    border: var(--outline);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 6px 0 var(--ink);
+    position: relative;
+    isolation: isolate;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: none;
+    container-type: inline-size;
+}
+
+/* Highlighter layer: sits above the tiles and multiplies into them,
+   so letters stay readable and the colour looks like marker ink. */
+#grid-overlay {
+    position: absolute;
+    top: var(--grid-pad);
+    left: var(--grid-pad);
+    width: calc(100% - var(--grid-pad) * 2);
+    height: calc(100% - var(--grid-pad) * 2);
+    pointer-events: none;
+    z-index: 3;
+    mix-blend-mode: multiply;
+    overflow: visible;
+}
+
+#grid-overlay line.draw-in {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+    animation: draw-line 0.35s ease-out forwards;
+}
+
+@keyframes draw-line {
+    to { stroke-dashoffset: 0; }
+}
+
+/* Keycap tiles */
+.cell {
+    min-width: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: var(--font-display);
+    font-size: clamp(12px, 4cqw, 26px);
+    font-weight: 600;
+    color: var(--ink);
+    background: var(--paper);
+    border-radius: 11px;
+    box-shadow: 0 3px 0 rgba(43, 35, 88, 0.22);
+    cursor: pointer;
+    position: relative;
+    z-index: 2;
+    transition: transform 0.12s ease, background-color 0.12s ease, box-shadow 0.12s ease;
+}
+
+.cell:hover {
+    background: #fff0f7;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 0 rgba(43, 35, 88, 0.22);
+}
+
+.cell.selecting {
+    background: var(--violet);
+    color: #fff;
+    transform: translateY(2px) scale(1.04);
+    box-shadow: 0 1px 0 var(--violet-dark);
+}
+
+.cell.found {
+    font-weight: 700;
+    animation: pop 0.4s ease-out both;
+}
+
+@keyframes pop {
+    0%   { transform: scale(1); }
+    45%  { transform: scale(1.25) rotate(-4deg); }
+    100% { transform: scale(1); }
+}
+
+.cell.miss {
+    animation: shake 0.3s ease-in-out;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25%      { transform: translateX(-3px); }
+    75%      { transform: translateX(3px); }
+}
+
+.cell.hint {
+    background: var(--sun);
+    animation: hint-pulse 0.9s ease-in-out infinite;
+}
+
+@keyframes hint-pulse {
+    0%, 100% { box-shadow: 0 3px 0 rgba(43, 35, 88, 0.22), 0 0 0 0 rgba(255, 95, 162, 0.9); }
+    50%      { box-shadow: 0 3px 0 rgba(43, 35, 88, 0.22), 0 0 0 7px rgba(255, 95, 162, 0); }
+}
+
+/* =========================================
+   Word list
+   ========================================= */
+.clues-section {
+    background: #fff9dc;
+    border: var(--outline);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 6px 0 var(--ink);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.clues-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
+.clues-section h2 {
+    font-family: var(--font-display);
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--ink);
+}
+
+.progress-badge {
+    font-family: var(--font-display);
+    font-size: 15px;
+    font-weight: 600;
+    background: var(--mint);
+    color: var(--ink);
+    border: 2.5px solid var(--ink);
+    border-radius: 999px;
+    padding: 2px 12px;
+    white-space: nowrap;
+}
+
+#clue-list {
+    list-style: none;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    overflow-y: auto;
+    align-content: start;
+    padding: 2px 4px 4px 2px;
+    min-height: 0;
+}
+
+#clue-list li {
+    --c: var(--violet);
+    font-family: var(--font-display);
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    line-height: 1.2;
+    background: var(--paper);
+    border: 2.5px solid var(--ink);
+    border-radius: 999px;
+    padding: 7px 10px 7px 34px;
+    position: relative;
+    box-shadow: 0 3px 0 var(--ink);
+    transition: background-color 0.3s ease, transform 0.3s ease;
+    overflow-wrap: anywhere;
+}
+
+/* colour swatch shows which marker colour the word will get */
+#clue-list li::before {
+    content: "";
+    position: absolute;
+    left: 9px;
+    top: 50%;
+    width: 16px;
+    height: 16px;
+    transform: translateY(-50%);
+    background: var(--c);
+    border: 2.5px solid var(--ink);
+    border-radius: 50%;
+}
+
+#clue-list li.solved {
+    background: var(--c);
+    transform: translateY(2px);
+    box-shadow: 0 1px 0 var(--ink);
+}
+
+#clue-list li.solved span {
+    text-decoration: line-through;
+    text-decoration-thickness: 2px;
+}
+
+#clue-list li.solved::before {
+    content: "✓";
+    background: var(--paper);
+    color: var(--ink);
+    font-size: 11px;
+    font-weight: 800;
+    line-height: 11px;
+    text-align: center;
+}
+
+/* =========================================
+   Buttons
+   ========================================= */
+.btn {
+    font-family: var(--font-display);
+    font-size: 15px;
+    font-weight: 600;
+    padding: 11px 18px;
+    border: var(--outline);
+    border-radius: 14px;
+    cursor: pointer;
+    color: var(--ink);
+    box-shadow: 0 4px 0 var(--ink);
+    transition: transform 0.1s ease, box-shadow 0.1s ease, background-color 0.15s ease;
+}
+
+.btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 5px 0 var(--ink);
+}
+
+.btn:active:not(:disabled) {
+    transform: translateY(3px);
+    box-shadow: 0 1px 0 var(--ink);
+}
+
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-primary { background: var(--violet); color: #fff; }
+.btn-primary:hover:not(:disabled) { background: var(--violet-dark); }
+
+.btn-secondary { background: var(--paper); }
+.btn-secondary:hover:not(:disabled) { background: #f6f3ff; }
+
+.btn-hint {
+    background: var(--sun);
+    flex-shrink: 0;
+    width: 100%;
+}
+.btn-hint:hover:not(:disabled) { background: #ffdc66; }
+
+/* =========================================
+   Win message
+   ========================================= */
+.win-box {
+    padding: 16px;
+    background: var(--mint-soft);
+    color: var(--ink);
+    border: var(--outline);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 6px 0 var(--ink);
+    text-align: center;
+    font-family: var(--font-display);
+    font-size: 18px;
+    font-weight: 600;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    flex-shrink: 0;
+
+    /* space is reserved while playing */
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.win-box.show {
+    opacity: 1;
+    visibility: visible;
+    animation: slide-up 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.win-buttons {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+}
+
+/* =========================================
+   Modal
+   ========================================= */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(43, 35, 88, 0.55);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    padding: 15px;
+}
+
+.modal-overlay.active { display: flex; }
+
+.modal-content {
+    --word-color: var(--violet);
+    background: var(--paper);
+    border: var(--outline);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 8px 0 var(--ink);
+    padding: 28px;
+    max-width: 500px;
+    width: 100%;
+    max-height: 88dvh;
+    overflow-y: auto;
+    animation: slide-up 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slide-up {
+    from { transform: translateY(20px) scale(0.95); opacity: 0; }
+    to   { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+#modal-word {
+    display: table;
+    margin: 0 auto 20px;
+    font-family: var(--font-display);
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-align: center;
+    color: var(--ink);
+    background: var(--word-color);
+    border: var(--outline);
+    border-radius: 999px;
+    padding: 4px 22px;
+    box-shadow: 0 4px 0 var(--ink);
+}
+
+.modal-body { margin-bottom: 24px; }
+
+.definition-text {
+    font-size: 16px;
+    line-height: 1.55;
+    font-weight: 700;
+    margin-bottom: 18px;
+}
+
+.quick-fact-box {
+    background: #fff4c2;
+    border: 2.5px dashed var(--ink);
+    border-radius: var(--radius-md);
+    padding: 14px 16px;
+}
+
+.quick-fact-label {
+    display: block;
+    font-family: var(--font-display);
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+#modal-quick-fact {
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.5;
+    color: #3d3768;
+}
+
+.modal-content .btn {
+    width: 100%;
+    padding: 13px;
+    font-size: 17px;
+}
+
+.hidden { display: none !important; }
+
+/* =========================================
+   Summary page
+   ========================================= */
+.full-page-modal {
+    position: fixed;
+    inset: 0;
+    background: var(--sky);
+    background-image: radial-gradient(rgba(255, 255, 255, 0.75) 3px, transparent 3.5px);
+    background-size: 28px 28px;
+    z-index: 2000;
+    display: flex;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.summary-content {
+    max-width: 800px;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    padding: 28px 20px 0;
+}
+
+.summary-header {
+    text-align: center;
+    margin-bottom: 20px;
+    flex-shrink: 0;
+}
+
+.summary-header h2 {
+    font-family: var(--font-display);
+    font-size: 30px;
+    font-weight: 700;
+    text-shadow: 3px 3px 0 var(--sun);
+    margin-bottom: 4px;
+}
+
+.summary-header p {
+    color: var(--ink-soft);
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.summary-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    flex: 1;
+    overflow-y: auto;
+    padding: 2px 6px 20px 2px;
+}
+
+.summary-card {
+    --c: var(--violet);
+    background: var(--paper);
+    padding: 18px 20px;
+    border: var(--outline);
+    border-left: 12px solid var(--c);
+    border-radius: var(--radius-md);
+    box-shadow: 0 5px 0 var(--ink);
+    flex-shrink: 0;
+}
+
+.summary-card h3 {
+    font-family: var(--font-display);
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+}
+
+.summary-card p {
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.5;
+    margin-bottom: 12px;
+}
+
+.summary-card .s-card-fact {
+    font-size: 14px;
+    font-weight: 600;
+    background: #fff4c2;
+    border: 2px dashed var(--ink);
+    padding: 10px 12px;
+    border-radius: var(--radius-sm);
+    line-height: 1.5;
+}
+
+.sticky-bottom {
+    flex-shrink: 0;
+    padding: 14px 0 24px;
+}
+
+.sticky-bottom .btn {
+    width: 100%;
+    padding: 15px;
+    font-size: 18px;
+}
+
+/* =========================================
+   Confetti
+   ========================================= */
+.confetti-layer {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+    z-index: 3000;
+}
+
+.confetti-piece {
+    position: absolute;
+    top: -20px;
+    width: 10px;
+    height: 14px;
+    border: 2px solid var(--ink);
+    border-radius: 3px;
+    animation: confetti-fall linear forwards;
+}
+
+@keyframes confetti-fall {
+    to { transform: translateY(105dvh) rotate(720deg); }
+}
+
+/* =========================================
+   Mobile
+   ========================================= */
+@media (max-width: 850px) {
+    :root {
+        --board-size: 46dvh;
+        --grid-gap: 3px;
+        --grid-pad: 8px;
+    }
+
+    body { padding: 0; }
+
+    .game-wrapper {
+        padding: 14px 14px 18px;
+        border: none;
+        border-radius: 0;
+        box-shadow: none;
+        height: 100%;
+        max-height: none;
+    }
+
+    header { margin-bottom: 12px; }
+    header h1 { font-size: 22px; text-shadow: 2px 2px 0 var(--sun); margin-bottom: 4px; }
+    header p { font-size: 12px; }
+
+    .game-container {
+        flex-direction: column;
+        gap: 14px;
+        align-items: stretch;
+        justify-content: flex-start;
+    }
+
+    .grid-section { flex: 0 0 auto; width: 100%; }
+
+    .word-grid {
+        border-radius: 20px;
+        box-shadow: 0 4px 0 var(--ink);
+    }
+
+    .cell { border-radius: 7px; box-shadow: 0 2px 0 rgba(43, 35, 88, 0.22); }
+
+    .right-col {
+        flex: 1 1 auto;
+        min-height: 0;
+        gap: 10px;
+    }
+
+    .clues-section {
+        flex: 1 1 auto;
+        padding: 12px;
+        gap: 10px;
+        border-radius: 20px;
+        box-shadow: 0 4px 0 var(--ink);
+    }
+
+    .clues-section h2 { font-size: 17px; }
+    .progress-badge { font-size: 13px; padding: 1px 10px; }
+
+    #clue-list { gap: 7px; }
+
+    #clue-list li {
+        font-size: 12px;
+        padding: 5px 6px 5px 26px;
+        box-shadow: 0 2px 0 var(--ink);
+    }
+
+    #clue-list li::before { left: 6px; width: 13px; height: 13px; border-width: 2px; }
+    #clue-list li.solved::before { font-size: 9px; line-height: 9px; }
+
+    .btn-hint { padding: 8px; font-size: 14px; }
+
+    /* no reserved space on small screens */
+    .win-box {
+        display: none;
+        padding: 12px;
+        gap: 8px;
+        font-size: 15px;
+        border-radius: 20px;
+        box-shadow: 0 4px 0 var(--ink);
+    }
+    .win-box.show { display: flex; }
+
+    .win-buttons { gap: 8px; }
+    .win-buttons .btn { flex: 1; padding: 9px 6px; font-size: 13px; white-space: nowrap; }
+
+    .modal-content { padding: 22px 18px; }
+    #modal-word { font-size: 21px; }
+    .summary-content { padding: 20px 14px 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
